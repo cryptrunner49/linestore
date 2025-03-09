@@ -1,4 +1,4 @@
-# DOCS.md - StoneKV Library Documentation
+# StoneKV Library Documentation
 
 ## Overview
 
