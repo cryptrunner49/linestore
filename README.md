@@ -1,14 +1,13 @@
-# StoneKVR 🪨🚀
+# StoneKV 🪨🚀
 
-**StoneKVR** is an **embedded NoSQL key/value store** written in Go. It provides on‑disk persistence with simple query capabilities, making it a lightweight and efficient solution for modern applications.
+**StoneKV** is an **embedded NoSQL key/value store** written in Go. It provides on‑disk persistence, making it a lightweight and efficient solution for modern applications.
 
 ## Overview 🔍
 
-StoneKVR offers:
+StoneKV offers:
 
 - **Embedded storage** for quick local data persistence.
 - **On‑disk durability** ensuring your data stays safe.
-- **Simple query capabilities** for effortless data retrieval.
 - **Native Go integration** for fast and concurrent operations.
 
 ## Features ✨
@@ -23,7 +22,7 @@ StoneKVR offers:
 1. **Install via Go Modules:**
 
    ```bash
-   go get github.com/cryptrunner49/stonekvr
+   go get github.com/cryptrunner49/stonekv
    ```  
 
 2. **Basic Usage Example:**
@@ -35,19 +34,19 @@ StoneKVR offers:
        "fmt"
        "log"
 
-       "github.com/cryptrunner49/stonekvr"
+       "github.com/cryptrunner49/stonekv"
    )
 
    func main() {
        // Initialize the store (creates a new one if it doesn't exist)
-       store, err := stonekvr.NewStore("data.db")
+       store, err := stonekv.NewStore("data.db")
        if err != nil {
            log.Fatal(err)
        }
        defer store.Close()
 
        // Set a key/value pair
-       err = store.Set("greeting", "Hello, StoneKVR! 👋")
+       err = store.Set("greeting", "Hello, StoneKV! 👋")
        if err != nil {
            log.Fatal(err)
        }
