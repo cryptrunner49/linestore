@@ -8,14 +8,14 @@ import (
 	"sync"
 )
 
-// Store represents the StoneKVR key/value store with on-disk persistence.
+// Store represents the StoneKV key/value store with on-disk persistence.
 type Store struct {
 	file  *os.File          // File handle for the database
 	index map[string]uint64 // In-memory index mapping keys to value offsets
 	mu    sync.RWMutex      // Mutex for concurrent access
 }
 
-// NewStore initializes or opens a StoneKVR store at the given file path.
+// NewStore initializes or opens a StoneKV store at the given file path.
 func NewStore(path string) (*Store, error) {
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

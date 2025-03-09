@@ -16,7 +16,7 @@ func main() {
 	defer store.Close()
 
 	// Set some key/value pairs
-	err = store.Set([]byte("greeting"), []byte("Hello, StoneKVR! 👋"))
+	err = store.Set([]byte("greeting"), []byte("Hello, StoneKV! 👋"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(value)) // Outputs: Hello, StoneKVR! 👋
+	fmt.Println(string(value)) // Outputs: Hello, StoneKV! 👋
 
 	// Create a full backup
 	err = store.Backup("stone_backup.db", false)
