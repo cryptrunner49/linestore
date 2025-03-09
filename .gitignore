@@ -27,3 +27,6 @@ go.work.sum
 tmp/
 build/
 bin/
+*.db
+*.backup
+*.bkp
