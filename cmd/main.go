@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// Initialize the store
-	store, err := stone.NewStore("data.db")
+	store, err := stone.NewStore("stone.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,14 +39,14 @@ func main() {
 	fmt.Println(string(value)) // Outputs: Hello, StoneKVR! 👋
 
 	// Create a full backup
-	err = store.Backup("data_full_backup.db", false)
+	err = store.Backup("stone_backup.db", false)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Full backup created at data_full_backup.db")
+	fmt.Println("Full backup created at stone_full_backup.db")
 
 	// Create a polished backup
-	err = store.Backup("data_polished_backup.db", true)
+	err = store.Backup("stone_polished_backup.db", true)
 	if err != nil {
 		log.Fatal(err)
 	}
