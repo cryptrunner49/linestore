@@ -1,5 +1,5 @@
 # Variables
-BINARY_NAME = stonekvr
+BINARY_NAME = stonekv
 BIN_DIR = bin
 SRC_DIR = cmd
 PACKAGE = ./...

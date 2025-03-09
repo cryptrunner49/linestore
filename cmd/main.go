@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cryptrunner49/stonekvr/stone"
+	"github.com/cryptrunner49/stonekv/stone"
 )
 
 func main() {
