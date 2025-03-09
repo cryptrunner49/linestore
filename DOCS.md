@@ -1,298 +1,328 @@
-# DOCS.md
+# DOCS.md - StoneKV Library Documentation
 
-## StoneKVR - A Simple Key/Value Store Library
+## Overview
 
-`StoneKVR` is a lightweight, persistent key/value store written in Go. It provides a simple API for storing, retrieving, and deleting key/value pairs on disk, with additional features like database polishing (compaction) and backups. This library is ideal for projects requiring a minimalistic, embedded key/value database with concurrent access support.
+**StoneKV** is a lightweight, persistent key-value store written in Go. It provides a simple API for storing, retrieving, and deleting key-value pairs on disk, with support for concurrent access, backups, and database compaction (polishing). This library is ideal for applications needing a simple, file-based persistence layer without the overhead of a full database system.
 
-### Features
+This document explains how to use the `stone` library, including setup, basic usage, and a complete API reference.
 
-- Persistent storage on disk
-- In-memory index for fast lookups
-- Thread-safe operations with `sync.RWMutex`
-- Support for full and polished backups
-- Database compaction with `Polish()`
-- Simple and intuitive API
+---
 
-### Project Structure
+## Table of Contents
 
-```text
-stonekv/
-├── cmd/
-│   └── main.go         # Example usage of the library
-├── stone/
-│   ├── stone.go        # Core library implementation
-│   └── stone_test.go   # Unit tests for the library
-└── DOCS.md             # This documentation
-```
+1. [Installation](#installation)
+2. [Quick Start](#quick-start)
+3. [API Reference](#api-reference)
+   - [NewStore](#newstore)
+   - [Set](#set)
+   - [Get](#get)
+   - [Delete](#delete)
+   - [Polish](#polish)
+   - [Backup](#backup)
+   - [Close](#close)
+4. [Example Usage](#example-usage)
+5. [Testing](#testing)
+6. [Contributing](#contributing)
+7. [License](#license)
 
 ---
 
 ## Installation
 
-To use `StoneKVR` in your project, follow these steps:
+To use the `stone` library in your Go project:
 
-1. **Add the library to your project:**
-   Since this is a custom library, you can either:
-   - Copy the `stone` directory into your project, or
-   - Host it in a repository (e.g., GitHub) and import it.
-
-   For example, if hosted at `github.com/cryptrunner49/stonekv`, run:
+1. Ensure you have Go installed (version 1.16 or later recommended).
+2. Add the library to your project:
 
    ```bash
    go get github.com/cryptrunner49/stonekv/stone
    ```
 
-2. **Import the library in your Go code:**
+3. Import the library in your code:
 
    ```go
    import "github.com/cryptrunner49/stonekv/stone"
    ```
 
-3. **Ensure your Go module is initialized:**
-   If your project uses Go modules, run:
-
-   ```bash
-   go mod init yourmodule
-   go mod tidy
-   ```
+The library has no external dependencies beyond the Go standard library, making it easy to integrate.
 
 ---
 
 ## Quick Start
 
-Here’s a basic example to get you started with `StoneKVR`:
+Here's a simple example to get you started with StoneKV:
 
 ```go
 package main
 
 import (
- "fmt"
- "log"
- "github.com/cryptrunner49/stonekv/stone"
+    "fmt"
+    "log"
+    "github.com/cryptrunner49/stonekv/stone"
 )
 
 func main() {
- // Initialize a new store
- store, err := stone.NewStore("mystore.db")
- if err != nil {
-  log.Fatal(err)
- }
- defer store.Close() // Always close the store when done
+    // Open or create a store
+    store, err := stone.NewStore("mystore.db")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer store.Close()
 
- // Set a key/value pair
- err = store.Set([]byte("name"), []byte("Alice"))
- if err != nil {
-  log.Fatal(err)
- }
+    // Set a key-value pair
+    err = store.Set([]byte("name"), []byte("Alice"))
+    if err != nil {
+        log.Fatal(err)
+    }
 
- // Get the value
- value, err := store.Get([]byte("name"))
- if err != nil {
-  log.Fatal(err)
- }
- fmt.Println("Value:", string(value)) // Output: Value: Alice
-
- // Delete the key
- err = store.Delete([]byte("name"))
- if err != nil {
-  log.Fatal(err)
- }
+    // Retrieve the value
+    value, err := store.Get([]byte("name"))
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Value:", string(value)) // Output: Value: Alice
 }
 ```
 
-This example creates a store, sets a key/value pair, retrieves it, and then deletes it. The data is persisted to `mystore.db`.
+This creates a database file `mystore.db`, stores a key-value pair, and retrieves it.
 
 ---
 
-## Usage Examples
+## API Reference
 
-### Setting and Retrieving Values
+The `stone` package provides the following methods on the `Store` type. All methods are thread-safe due to internal mutex locking.
 
-```go
-store, _ := stone.NewStore("data.db")
-defer store.Close()
-
-// Set multiple key/value pairs
-store.Set([]byte("user1"), []byte("Bob"))
-store.Set([]byte("user2"), []byte("Charlie"))
-
-// Retrieve values
-val1, _ := store.Get([]byte("user1"))
-val2, _ := store.Get([]byte("user2"))
-fmt.Println(string(val1)) // Output: Bob
-fmt.Println(string(val2)) // Output: Charlie
-```
-
-### Deleting a Key
+### NewStore
 
 ```go
-store, _ := stone.NewStore("data.db")
-defer store.Close()
-
-store.Set([]byte("temp"), []byte("delete me"))
-store.Delete([]byte("temp"))
-
-val, err := store.Get([]byte("temp"))
-if err != nil {
- fmt.Println("Key not found, as expected:", err)
-}
+func NewStore(path string) (*Store, error)
 ```
 
-### Creating Backups
+Initializes or opens a StoneKV store at the specified file path. If the file doesn’t exist, it creates one. On startup, it builds an in-memory index of existing key-value pairs.
 
-```go
-store, _ := stone.NewStore("data.db")
-defer store.Close()
-
-// Full backup (includes all records, even deleted ones)
-store.Backup("full_backup.db", false)
-fmt.Println("Full backup created")
-
-// Polished backup (only active key/value pairs)
-store.Backup("polished_backup.db", true)
-fmt.Println("Polished backup created")
-```
-
-### Polishing the Database
-
-```go
-store, _ := stone.NewStore("data.db")
-defer store.Close()
-
-store.Set([]byte("key1"), []byte("value1"))
-store.Delete([]byte("key1")) // Mark key1 as deleted
-store.Polish()               // Compact the database
-fmt.Println("Database polished")
-```
-
----
-
-## API Documentation
-
-### `type Store`
-
-The core struct representing the key/value store.
-
-- **Fields (not exported):**
-  - `file`: The underlying file handle.
-  - `index`: An in-memory map of keys to value offsets.
-  - `mu`: A read/write mutex for thread safety.
-
-### `func NewStore(path string) (*Store, error)`
-
-Creates or opens a store at the specified file path.
-
-- **Parameters:**
-  - `path` (string): The file path for the database (e.g., `"data.db"`).
-- **Returns:**
+- **Parameters**:
+  - `path` (string): Path to the database file (e.g., `"data.db"`).
+- **Returns**:
   - `*Store`: A pointer to the initialized store.
-  - `error`: An error if the file cannot be opened or the index cannot be built.
-- **Example:**
+  - `error`: Non-nil if the file cannot be opened or the index cannot be built.
 
-  ```go
-  store, err := stone.NewStore("mydb.db")
-  if err != nil {
-      log.Fatal(err)
-  }
-  defer store.Close()
-  ```
+**Example**:
 
-### `func (s *Store) Set(key, value []byte) error`
+```go
+store, err := stone.NewStore("data.db")
+if err != nil {
+    log.Fatal(err)
+}
+defer store.Close()
+```
 
-Stores a key/value pair in the database.
+---
 
-- **Parameters:**
+### Set
+
+```go
+func (s *Store) Set(key, value []byte) error
+```
+
+Stores a key-value pair in the database. Overwrites the value if the key already exists.
+
+- **Parameters**:
   - `key` ([]byte): The key to store.
   - `value` ([]byte): The value to associate with the key.
-- **Returns:**
-  - `error`: An error if the write fails.
-- **Example:**
+- **Returns**:
+  - `error`: Non-nil if the write operation fails.
 
-  ```go
-  err := store.Set([]byte("id"), []byte("12345"))
-  ```
+**Example**:
 
-### `func (s *Store) Get(key []byte) ([]byte, error)`
+```go
+err := store.Set([]byte("user"), []byte("Bob"))
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+---
+
+### Get
+
+```go
+func (s *Store) Get(key []byte) ([]byte, error)
+```
 
 Retrieves the value associated with a key.
 
-- **Parameters:**
+- **Parameters**:
   - `key` ([]byte): The key to look up.
-- **Returns:**
-  - `[]byte`: The value, if found.
-  - `error`: An error if the key is not found or reading fails.
-- **Example:**
+- **Returns**:
+  - `[]byte`: The value associated with the key.
+  - `error`: Non-nil if the key is not found or reading fails.
 
-  ```go
-  value, err := store.Get([]byte("id"))
-  if err == nil {
-      fmt.Println(string(value)) // Output: 12345
-  }
-  ```
+**Example**:
 
-### `func (s *Store) Delete(key []byte) error`
+```go
+value, err := store.Get([]byte("user"))
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(string(value)) // Output: Bob
+```
 
-Marks a key as deleted in the database.
+---
 
-- **Parameters:**
+### Delete
+
+```go
+func (s *Store) Delete(key []byte) error
+```
+
+Removes a key and its associated value from the database. The deletion is logged to disk, and the key is removed from the in-memory index.
+
+- **Parameters**:
   - `key` ([]byte): The key to delete.
-- **Returns:**
-  - `error`: An error if the write fails.
-- **Example:**
+- **Returns**:
+  - `error`: Non-nil if the write operation fails.
 
-  ```go
-  err := store.Delete([]byte("id"))
-  ```
+**Example**:
 
-### `func (s *Store) Polish() error`
+```go
+err := store.Delete([]byte("user"))
+if err != nil {
+    log.Fatal(err)
+}
+```
 
-Compacts the database by rewriting only active key/value pairs, removing deleted records.
+---
 
-- **Returns:**
-  - `error`: An error if the operation fails.
-- **Notes:**
-  - Creates a backup of the original file (`.backup` suffix) before polishing.
-- **Example:**
+### Polish
 
-  ```go
-  err := store.Polish()
-  if err == nil {
-      fmt.Println("Database compacted")
-  }
-  ```
+```go
+func (s *Store) Polish() error
+```
 
-### `func (s *Store) Backup(path string, polished bool) error`
+Compacts the database by creating a new file containing only active key-value pairs, removing deleted or overwritten entries. The original file is backed up before replacement.
 
-Creates a backup of the database at the specified path.
+- **Returns**:
+  - `error`: Non-nil if the operation fails (e.g., file I/O errors).
 
-- **Parameters:**
-  - `path` (string): The file path for the backup.
-  - `polished` (bool): If `true`, only active key/value pairs are backed up; if `false`, a full copy is made.
-- **Returns:**
-  - `error`: An error if the backup fails.
-- **Example:**
+**Example**:
 
-  ```go
-  store.Backup("backup.db", true) // Polished backup
-  ```
+```go
+err := store.Polish()
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Database compacted")
+```
 
-### `func (s *Store) Close() error`
+---
 
-Closes the store and releases resources.
+### Backup
 
-- **Returns:**
-  - `error`: An error if closing the file fails.
-- **Example:**
+```go
+func (s *Store) Backup(path string, polished bool) error
+```
 
-  ```go
-  err := store.Close()
-  ```
+Creates a backup of the database at the specified path. If `polished` is `true`, only active key-value pairs are included; otherwise, it’s a full copy of the file.
+
+- **Parameters**:
+  - `path` (string): Path to the backup file.
+  - `polished` (bool): If true, creates a compact backup; if false, copies the entire file.
+- **Returns**:
+  - `error`: Non-nil if the backup fails.
+
+**Example**:
+
+```go
+// Full backup
+err := store.Backup("backup.db", false)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Polished backup
+err = store.Backup("polished_backup.db", true)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+---
+
+### Close
+
+```go
+func (s *Store) Close() error
+```
+
+Closes the store and releases file resources. Always call this when done using the store to avoid resource leaks.
+
+- **Returns**:
+  - `error`: Non-nil if closing the file fails.
+
+**Example**:
+
+```go
+err := store.Close()
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+---
+
+## Example Usage
+
+The following example demonstrates a complete workflow using the `stone` library:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "github.com/cryptrunner49/stonekv/stone"
+)
+
+func main() {
+    // Initialize the store
+    store, err := stone.NewStore("example.db")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer store.Close()
+
+    // Set key-value pairs
+    store.Set([]byte("key1"), []byte("value1"))
+    store.Set([]byte("key2"), []byte("value2"))
+
+    // Retrieve a value
+    val, _ := store.Get([]byte("key1"))
+    fmt.Println("key1:", string(val)) // Output: key1: value1
+
+    // Delete a key
+    store.Delete([]byte("key1"))
+
+    // Backup the database
+    store.Backup("example_backup.db", false)
+    fmt.Println("Backup created")
+
+    // Polish the database
+    store.Polish()
+    fmt.Println("Database polished")
+
+    // Verify deletion
+    _, err = store.Get([]byte("key1"))
+    if err != nil {
+        fmt.Println("key1 was deleted as expected")
+    }
+}
+```
 
 ---
 
 ## Testing
 
-The library includes comprehensive unit tests in `stone/stone_test.go`. To run the tests:
+The library includes a comprehensive test suite in `stone/stone_test.go`. To run the tests:
 
 ```bash
 cd stone
@@ -301,27 +331,27 @@ go test -v
 
 The tests cover:
 
-- Basic CRUD operations (`Set`, `Get`, `Delete`)
-- Persistence across store reopenings
-- Database polishing
-- Full and polished backups
-
----
-
-## Notes
-
-- **Thread Safety:** All public methods (`Set`, `Get`, `Delete`, `Polish`, `Backup`, `Close`) are thread-safe due to the use of `sync.RWMutex`.
-- **Persistence:** Data is written to disk immediately, but deleted keys remain in the file until `Polish()` is called.
-- **Error Handling:** Always check returned errors to ensure operations succeed.
+- Basic CRUD operations (`Set`, `Get`, `Delete`).
+- Persistence across store reopenings.
+- Database polishing (`Polish`).
+- Full and polished backups (`Backup`).
 
 ---
 
 ## Contributing
 
-Feel free to fork the repository, submit issues, or create pull requests. Contributions to improve performance, add features, or enhance documentation are welcome!
+Contributions are welcome! To contribute:
+
+1. Fork the repository at `github.com/cryptrunner49/stonekv`.
+2. Create a feature branch (`git checkout -b feature-name`).
+3. Commit your changes (`git commit -m "Add feature"`).
+4. Push to the branch (`git push origin feature-name`).
+5. Open a pull request.
+
+Please include tests for new features and ensure existing tests pass.
 
 ---
 
 ## License
 
-This library is provided as-is with no specific license attached. Define your own licensing terms if you distribute it further.
+This library is licensed under the MIT License. See the `LICENSE` file in the repository for details.
