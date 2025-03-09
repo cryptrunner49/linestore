@@ -34,7 +34,7 @@ StoneKV offers:
        "fmt"
        "log"
 
-       "github.com/cryptrunner49/stonekv"
+       "github.com/cryptrunner49/stonekv/stone"
    )
 
    func main() {
