@@ -1,6 +1,6 @@
-# Contributing to StoneKVR 🪨💡
+# Contributing to StoneKV 🪨💡
 
-Thank you for considering contributing to **StoneKVR**! We appreciate your help in making this project better for everyone.
+Thank you for considering contributing to **StoneKV**! We appreciate your help in making this project better for everyone.
 
 ## How to Contribute 🚀
 
@@ -35,4 +35,4 @@ If you encounter any bugs or have suggestions for improvements, please open an i
 - **Documentation:** Update documentation accordingly if your changes affect usage.
 - **Communication:** Feel free to ask questions by opening an issue or discussing in our community channels.
 
-Thank you for contributing to StoneKVR! Your help makes a difference. 🙏
+Thank you for contributing to StoneKV! Your help makes a difference. 🙏
