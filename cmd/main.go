@@ -4,58 +4,61 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cryptrunner49/stonekv/stone"
+	"github.com/cryptrunner49/linestore/store"
 )
 
 func main() {
-	// Initialize the store
-	store, err := stone.NewStore("stone.db")
+	store, err := store.NewStore("linestore.db")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer store.Close()
 
-	// Set some key/value pairs
-	err = store.Set([]byte("greeting"), []byte("Hello, StoneKV! 👋"))
+	// Set some values
+	line1, err := store.Set([]byte("Hello, Line Store! 👋"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = store.Set([]byte("farewell"), []byte("Goodbye!"))
+	_, err = store.Set([]byte("Goodbye!"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Delete a key
-	err = store.Delete([]byte("farewell"))
+	// List from beginning
+	fmt.Println("List from beginning:")
+	pairs, err := store.List()
 	if err != nil {
 		log.Fatal(err)
 	}
+	for _, pair := range pairs {
+		line := pair[0].(uint64)
+		val := pair[1].([]byte)
+		fmt.Printf("Line %d: %s\n", line, string(val))
+	}
+
+	// List from end!
+	fmt.Println("\nList from end!")
+	reversePairs, err := store.ListAllReverse()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, pair := range reversePairs {
+		line := pair[0].(uint64)
+		val := pair[1].([]byte)
+		fmt.Printf("Line %d: %s\n", line, string(val))
+	}
+
+	// Get last line number
+	lastLine, err := store.GetLastLine()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("\nLast line number:", lastLine)
 
 	// Retrieve a value
-	value, err := store.Get([]byte("greeting"))
+	value, err := store.Get(line1)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(string(value)) // Outputs: Hello, StoneKV! 👋
-
-	// Create a full backup
-	err = store.Backup("stone_backup.db", false)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Full backup created at stone_full_backup.db")
-
-	// Create a polished backup
-	err = store.Backup("stone_polished_backup.db", true)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Polished backup created at data_polished_backup.db")
-
-	// Polish the database
-	err = store.Polish()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Database polished")
+	fmt.Println("\nGet line", line1, ":", string(value))
 }

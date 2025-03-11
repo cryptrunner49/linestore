@@ -1,5 +1,5 @@
 # Variables
-BINARY_NAME = stonekv
+BINARY_NAME = linestore
 BIN_DIR = bin
 SRC_DIR = cmd
 PACKAGE = ./...
