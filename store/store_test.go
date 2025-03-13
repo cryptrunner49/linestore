@@ -75,6 +75,16 @@ func TestList(t *testing.T) {
 	}
 	defer store.Close()
 
+	// Add test data
+	_, err = store.Set([]byte("value1"))
+	if err != nil {
+		t.Fatalf("set failed: %v", err)
+	}
+	_, err = store.Set([]byte("value2"))
+	if err != nil {
+		t.Fatalf("set failed: %v", err)
+	}
+
 	pairs, err := store.List()
 	if err != nil {
 		t.Fatalf("list failed: %v", err)
